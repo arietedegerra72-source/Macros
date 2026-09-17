@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Báscula de Macros</title>
+  <style>
+    :root {
+      --bg-color: #121212;
+      --card-bg: #1c1a18;
+      --border-color: #2e2b28;
+      --input-bg: #262320;
+      --text-main: #e6e1da;
+      --text-muted: #9e978e;
+      --accent-green: #70b886;
+      --accent-kcal: #e57373;
+      --accent-prot: #81c784;
+      --accent-carb: #ffb74d;
+      --accent-fats: #64b5f6;
+      --btn-bg: #e6dfd5;
+      --btn-text: #1c1a18;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      padding: 16px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .title-area h1 {
+      font-size: 28px;
+      font-weight: 700;
+      font-family: Georgia, serif;
+    }
+
+    .title-area h1 span {
+      font-style: italic;
+      color: var(--accent-green);
+      font-weight: 400;
+    }
+
+    .title-area p {
+      color: var(--text-muted);
+      font-size: 13px;
+      margin-top: 4px;
+      max-width: 450px;
+    }
+
+    .day-total {
+      text-align: right;
+    }
+
+    .day-total .day-label {
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .day-total .kcal-big {
+      font-size: 32px;
+      font-weight: bold;
+    }
+
+    /* Selector de días */
+    .day-selector-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+    }
+
+    .day-btn {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+
+    .day-btn.active {
+      background-color: var(--accent-green);
+      color: #000;
+      font-weight: bold;
+      border-color: var(--accent-green);
+    }
+
+    /* Main Container */
+    .app-grid {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 800px) {
+      .app-grid { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    h2 {
+      font-size: 18px;
+      margin-bottom: 12px;
+    }
+
+    /* Form Styles */
+    .form-group {
+      margin-bottom: 12px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    input, select {
+      width: 100%;
+      background-color: var(--input-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .row-inputs {
+      display: flex;
+      gap: 10px;
+    }
+
+    .macro-preview {
+      background-color: #141211;
+      padding: 10px;
+      border-radius: 6px;
+      display: flex;
+      justify-content: space-between;
+      margin: 12px 0;
+      font-size: 13px;
+      font-weight: bold;
+    }
+
+    .btn-add {
+      width: 100%;
+      background-color: var(--btn-bg);
+      color: var(--btn-text);
+      border: none;
+      padding: 12px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    details summary {
+      color: var(--text-muted);
+      font-size: 13px;
+      cursor: pointer;
+      margin-top: 12px;
+      margin-bottom: 8px;
+    }
+
+    .btn-secondary {
+      background-color: #2c2825;
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      padding: 10px;
+      width: 100%;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    /* Meals Display */
+    .meal-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .meal-title {
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .meal-macros-summary {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .empty-meal {
+      font-style: italic;
+      color: var(--text-muted);
+      font-size: 13px;
+      padding: 10px 0;
+    }
+
+    .food-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin-top: 8px;
+    }
+
+    .food-table th {
+      text-align: right;
+      padding: 4px;
+      color: var(--text-muted);
+      font-weight: normal;
+      font-size: 11px;
+    }
+
+    .food-table th:first-child { text-align: left; }
+
+    .food-table td {
+      padding: 6px 4px;
+      text-align: right;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .food-table td:first-child { text-align: left; }
+
+    .remove-btn {
+      color: var(--text-muted);
+      cursor: pointer;
+      font-weight: bold;
+      padding-left: 6px;
+    }
+
+    /* Total Macros Footer Cards */
+    .totals-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .total-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .total-card .val {
+      font-size: 22px;
+      font-weight: bold;
+    }
+
+    .total-card .lbl {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .actions-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .link-btn {
+      color: var(--text-muted);
+      text-decoration: underline;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="title-area">
+      <h1>Báscula de <span>macros</span></h1>
+      <p>Pesa el alimento, añade los gramos y monta el menú del día — almuerzo, comida, merienda y cena.</p>
+    </div>
+    <div class="day-total">
+      <div class="day-label" id="selected-day-title">Lunes</div>
+      <div class="kcal-big"><span id="header-kcal">0</span> kcal</div>
+    </div>
+  </header>
+
+  <!-- Selector de días de la semana -->
+  <div class="day-selector-bar" id="day-selector">
+    <button class="day-btn active" onclick="changeDay('Lunes')">Lunes</button>
+    <button class="day-btn" onclick="changeDay('Martes')">Martes</button>
+    <button class="day-btn" onclick="changeDay('Miércoles')">Miércoles</button>
+    <button class="day-btn" onclick="changeDay('Jueves')">Jueves</button>
+    <button class="day-btn" onclick="changeDay('Viernes')">Viernes</button>
+    <button class="day-btn" onclick="changeDay('Sábado')">Sábado</button>
+    <button class="day-btn" onclick="changeDay('Domingo')">Domingo</button>
+  </div>
+
+  <div class="app-grid">
+    <!-- Panel Izquierdo: Añadir / Crear -->
+    <div>
+      <div class="card">
+        <h2>Añadir alimento</h2>
+        
+        <div class="form-group">
+          <label>Alimento</label>
+          <select id="food-select" onchange="updateCalculations()"></select>
+        </div>
+
+        <div class="row-inputs">
+          <div class="form-group" style="flex:1;">
+            <label>Gramos</label>
+            <input type="number" id="grams-input" value="100" oninput="updateCalculations()">
+          </div>
+          <div class="form-group" style="flex:1;">
+            <label>Comida</label>
+            <select id="meal-select">
+              <option value="Almuerzo">Almuerzo</option>
+              <option value="Comida" selected>Comida</option>
+              <option value="Merienda">Merienda</option>
+              <option value="Cena">Cena</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="macro-preview">
+          <span><span id="calc-kcal">0</span> kcal</span>
+          <span style="color:var(--accent-prot)">P <span id="calc-p">0</span>g</span>
+          <span style="color:var(--accent-carb)">C <span id="calc-c">0</span>g</span>
+          <span style="color:var(--accent-fats)">G <span id="calc-g">0</span>g</span>
+        </div>
+
+        <button class="btn-add" onclick="addFoodToMeal()">Añadir a la comida</button>
+
+        <details>
+          <summary>▼ Añadir alimento que no está en la lista</summary>
+          <div class="form-group"><input type="text" id="new-name" placeholder="Nombre"></div>
+          <div class="row-inputs">
+            <div class="form-group"><input type="number" id="new-kcal" placeholder="Kcal /100g"></div>
+            <div class="form-group"><input type="number" id="new-p" placeholder="Proteína /100g"></div>
+          </div>
+          <div class="row-inputs">
+            <div class="form-group"><input type="number" id="new-c" placeholder="Carbos /100g"></div>
+            <div class="form-group"><input type="number" id="new-g" placeholder="Grasa /100g"></div>
+          </div>
+          <button class="btn-secondary" onclick="createNewFood()">Guardar alimento</button>
+        </details>
+      </div>
+    </div>
+
+    <!-- Panel Derecho: Comidas del Día -->
+    <div>
+      <div id="meals-container"></div>
+
+      <!-- Resumen de Macros -->
+      <div class="totals-grid">
+        <div class="total-card">
+          <div class="val" id="total-kcal" style="color: var(--accent-kcal);">0</div>
+          <div class="lbl">kcal</div>
+        </div>
+        <div class="total-card">
+          <div class="val" id="total-p" style="color: var(--accent-prot);">0</div>
+          <div class="lbl">proteína g</div>
+        </div>
+        <div class="total-card">
+          <div class="val" id="total-c" style="color: var(--accent-carb);">0</div>
+          <div class="lbl">carbos g</div>
+        </div>
+        <div class="total-card">
+          <div class="val" id="total-g" style="color: var(--accent-fats);">0</div>
+          <div class="lbl">grasa g</div>
+        </div>
+      </div>
+
+      <div class="actions-bar">
+        <div>
+          <button class="link-btn" onclick="exportData()">Exportar menú (Copia)</button> | 
+          <button class="link-btn" onclick="document.getElementById('file-input').click()">Importar menú</button>
+          <input type="file" id="file-input" style="display:none;" onchange="importData(event)">
+        </div>
+        <button class="link-btn" onclick="clearCurrentDay()">Vaciar el día</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Base de alimentos por defecto
+    let foodDatabase = JSON.parse(localStorage.getItem('foodDB')) || [
+      { name: "Pechuga de Mercadona", kcal: 100, p: 22, c: 0, g: 1.8 },
+      { name: "Atún al natural (lata)", kcal: 116, p: 26, c: 0, g: 1 }
+    ];
+
+    // Estructura por días
+    let daysData = JSON.parse(localStorage.getItem('daysData')) || {
+      "Lunes": { Almuerzo: [], Comida: [], Merienda: [], Cena: [] },
+      "Martes": { Almuerzo: [], Comida: [], Merienda: [], Cena: [] },
+      "Miércoles": { Almuerzo: [], Comida: [], Merienda: [], Cena: [] },
+      "Jueves": { Almuerzo: [], Comida: [], Merienda: [], Cena: [] },
+      "Viernes": { Almuerzo: [], Comida: [], Merienda: [], Cena: [] },
+      "Sábado": { Almuerzo: [], Comida: [], Merienda: [], Cena: [] },
+      "Domingo": { Almuerzo: [], Comida: [], Merienda: [], Cena: [] }
+    };
+
+    let currentDay = "Lunes";
+
+    function saveState() {
+      localStorage.setItem('foodDB', JSON.stringify(foodDatabase));
+      localStorage.setItem('daysData', JSON.stringify(daysData));
+    }
+
+    function init() {
+      renderFoodOptions();
+      renderDay();
+    }
+
+    function renderFoodOptions() {
+      const select = document.getElementById('food-select');
+      select.innerHTML = foodDatabase.map((f, i) => `<option value="${i}">${f.name}</option>`).join('');
+      updateCalculations();
+    }
+
+    function updateCalculations() {
+      const foodIndex = document.getElementById('food-select').value;
+      const grams = parseFloat(document.getElementById('grams-input').value) || 0;
+      if (foodIndex === "" || !foodDatabase[foodIndex]) return;
+
+      const food = foodDatabase[foodIndex];
+      const factor = grams / 100;
+
+      document.getElementById('calc-kcal').innerText = Math.round(food.kcal * factor);
+      document.getElementById('calc-p').innerText = (food.p * factor).toFixed(1);
+      document.getElementById('calc-c').innerText = (food.c * factor).toFixed(1);
+      document.getElementById('calc-g').innerText = (food.g * factor).toFixed(1);
+    }
+
+    function changeDay(day) {
+      currentDay = day;
+      document.querySelectorAll('.day-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.innerText === day);
+      });
+      document.getElementById('selected-day-title').innerText = day;
+      renderDay();
+    }
+
+    function createNewFood() {
+      const name = document.getElementById('new-name').value;
+      const kcal = parseFloat(document.getElementById('new-kcal').value) || 0;
+      const p = parseFloat(document.getElementById('new-p').value) || 0;
+      const c = parseFloat(document.getElementById('new-c').value) || 0;
+      const g = parseFloat(document.getElementById('new-g').value) || 0;
+
+      if (!name) return alert("Pon un nombre al alimento");
+
+      foodDatabase.push({ name, kcal, p, c, g });
+      saveState();
+      renderFoodOptions();
+      
+      // Limpiar formulario
+      document.getElementById('new-name').value = '';
+      document.getElementById('new-kcal').value = '';
+      document.getElementById('new-p').value = '';
+      document.getElementById('new-c').value = '';
+      document.getElementById('new-g').value = '';
+    }
+
+    function addFoodToMeal() {
+      const foodIndex = document.getElementById('food-select').value;
+      const grams = parseFloat(document.getElementById('grams-input').value) || 0;
+      const meal = document.getElementById('meal-select').value;
+
+      if (grams <= 0) return;
+
+      const food = foodDatabase[foodIndex];
+      const factor = grams / 100;
+
+      daysData[currentDay][meal].push({
+        name: food.name,
+        grams: grams,
+        kcal: Math.round(food.kcal * factor),
+        p: parseFloat((food.p * factor).toFixed(1)),
+        c: parseFloat((food.c * factor).toFixed(1)),
+        g: parseFloat((food.g * factor).toFixed(1))
+      });
+
+      saveState();
+      renderDay();
+    }
+
+    function removeFood(meal, index) {
+      daysData[currentDay][meal].splice(index, 1);
+      saveState();
+      renderDay();
+    }
+
+    function clearCurrentDay() {
+      if (confirm(`¿Vaciar todos los alimentos del ${currentDay}?`)) {
+        daysData[currentDay] = { Almuerzo: [], Comida: [], Merienda: [], Cena: [] };
+        saveState();
+        renderDay();
+      }
+    }
+
+    function renderDay() {
+      const container = document.getElementById('meals-container');
+      const dayMeals = daysData[currentDay];
+      const mealsList = ["Almuerzo", "Comida", "Merienda", "Cena"];
+
+      let totKcal = 0, totP = 0, totC = 0, totG = 0;
+      container.innerHTML = "";
+
+      mealsList.forEach(mealName => {
+        const items = dayMeals[mealName] || [];
+        
+        let mKcal = 0, mP = 0, mC = 0, mG = 0;
+        items.forEach(item => {
+          mKcal += item.kcal; mP += item.p; mC += item.c; mG += item.g;
+        });
+
+        totKcal += mKcal; totP += mP; totC += mC; totG += mG;
+
+        let itemsHtml = items.length === 0 
+          ? `<div class="empty-meal">Sin alimentos todavía.</div>` 
+          : `<table class="food-table">
+              <tr>
+                <th style="text-align:left;">● proteína ● carbos ● grasa</th>
+                <th></th><th></th><th></th><th></th><th></th>
+              </tr>
+              ${items.map((it, idx) => `
+                <tr>
+                  <td>${it.name}</td>
+                  <td>${it.grams} g</td>
+                  <td style="color:var(--accent-prot)">${it.p}g</td>
+                  <td style="color:var(--accent-carb)">${it.c}g</td>
+                  <td style="color:var(--accent-fats)">${it.g}g</td>
+                  <td><span class="remove-btn" onclick="removeFood('${mealName}',${idx})">✕</span></td>
+                </tr>
+              `).join('')}
+            </table>`;
+
+        container.innerHTML += `
+          <div class="card">
+            <div class="meal-card-header">
+              <div class="meal-title">${mealName}</div>
+              <div class="meal-macros-summary">${mKcal} kcal · P ${mP.toFixed(1)} · C ${mC.toFixed(1)} · G ${mG.toFixed(1)}</div>
+            </div>
+            ${itemsHtml}
+          </div>
+        `;
+      });
+
+      // Actualizar Totales
+      document.getElementById('header-kcal').innerText = totKcal;
+      document.getElementById('total-kcal').innerText = totKcal;
+      document.getElementById('total-p').innerText = totP.toFixed(1);
+      document.getElementById('total-c').innerText = totC.toFixed(1);
+      document.getElementById('total-g').innerText = totG.toFixed(1);
+    }
+
+    // Funciones de Importar / Exportar JSON
+    function exportData() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ foodDatabase, daysData }));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `menu_macros_copia.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    function importData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (imported.foodDatabase && imported.daysData) {
+            foodDatabase = imported.foodDatabase;
+            daysData = imported.daysData;
+            saveState();
+            init();
+            alert("¡Menú e historial importados correctamente!");
+          } else {
+            alert("El archivo no tiene el formato correcto.");
+          }
+        } catch (err) {
+          alert("Error al leer el archivo.");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    init();
+  </script>
+</body>
+</html>
