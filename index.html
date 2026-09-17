@@ -197,15 +197,36 @@
       margin-top: 8px;
     }
 
-    .btn-danger-link {
+    /* Lista de gestión de alimentos */
+    .manage-list {
+      margin-top: 8px;
+      max-height: 180px;
+      overflow-y: auto;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background-color: #141211;
+    }
+
+    .manage-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 13px;
+    }
+
+    .manage-item:last-child {
+      border-bottom: none;
+    }
+
+    .btn-del-item {
       background: none;
       border: none;
       color: #e57373;
-      font-size: 11px;
       cursor: pointer;
-      margin-top: 4px;
-      text-decoration: underline;
-      display: inline-block;
+      font-size: 12px;
+      padding: 2px 6px;
     }
 
     /* Meals Display */
@@ -335,7 +356,7 @@
   </div>
 
   <div class="app-grid">
-    <!-- Panel Izquierdo: Añadir / Crear -->
+    <!-- Panel Izquierdo: Añadir / Crear / Borrar -->
     <div>
       <div class="card">
         <h2>Añadir alimento</h2>
@@ -343,7 +364,6 @@
         <div class="form-group">
           <label>Alimento</label>
           <select id="food-select" onchange="updateCalculations()"></select>
-          <button class="btn-danger-link" onclick="deleteSelectedFood()">🗑️ Borrar alimento de la lista base</button>
         </div>
 
         <div class="row-inputs">
@@ -371,6 +391,7 @@
 
         <button class="btn-add" onclick="addFoodToMeal()">Añadir a la comida</button>
 
+        <!-- Crear Nuevo Alimento -->
         <details>
           <summary>▼ Añadir alimento que no está en la lista</summary>
           <div class="form-group"><input type="text" id="new-name" placeholder="Nombre"></div>
@@ -383,6 +404,12 @@
             <div class="form-group"><input type="number" id="new-g" placeholder="Grasa /100g"></div>
           </div>
           <button class="btn-secondary" onclick="createNewFood()">Guardar alimento</button>
+        </details>
+
+        <!-- Gestor para Borrar Alimentos de la Lista -->
+        <details>
+          <summary>⚙️ Gestionar / Borrar alimentos de la lista</summary>
+          <div class="manage-list" id="manage-food-list"></div>
         </details>
       </div>
     </div>
@@ -454,22 +481,28 @@
 
     function renderFoodOptions() {
       const select = document.getElementById('food-select');
+      const manageList = document.getElementById('manage-food-list');
+
       if (foodDatabase.length === 0) {
         select.innerHTML = `<option value="">(No hay alimentos guardados)</option>`;
+        manageList.innerHTML = `<div style="padding:8px; color:var(--text-muted); font-size:12px;">No hay alimentos guardados.</div>`;
       } else {
         select.innerHTML = foodDatabase.map((f, i) => `<option value="${i}">${f.name}</option>`).join('');
+        
+        manageList.innerHTML = foodDatabase.map((f, i) => `
+          <div class="manage-item">
+            <span>${f.name}</span>
+            <button class="btn-del-item" onclick="deleteFoodFromDB(${i})">🗑️ Borrar</button>
+          </div>
+        `).join('');
       }
       updateCalculations();
     }
 
-    function deleteSelectedFood() {
-      const select = document.getElementById('food-select');
-      const idx = select.value;
-      if (idx === "" || !foodDatabase[idx]) return alert("No hay ningún alimento seleccionado para borrar.");
-
-      const foodName = foodDatabase[idx].name;
-      if (confirm(`¿Seguro que quieres borrar "${foodName}" de la lista base de alimentos?`)) {
-        foodDatabase.splice(idx, 1);
+    function deleteFoodFromDB(index) {
+      const foodName = foodDatabase[index].name;
+      if (confirm(`¿Quieres eliminar "${foodName}" de tu lista de alimentos?`)) {
+        foodDatabase.splice(index, 1);
         saveState();
         renderFoodOptions();
       }
