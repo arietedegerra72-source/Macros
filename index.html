@@ -211,7 +211,7 @@
     /* Lista de gestión de alimentos */
     .manage-list {
       margin-top: 8px;
-      max-height: 180px;
+      max-height: 220px;
       overflow-y: auto;
       border: 1px solid var(--border-color);
       border-radius: 6px;
@@ -231,14 +231,21 @@
       border-bottom: none;
     }
 
-    .btn-del-item {
+    .item-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .btn-action-item {
       background: none;
       border: none;
-      color: #e57373;
       cursor: pointer;
       font-size: 12px;
-      padding: 2px 6px;
+      padding: 2px 4px;
     }
+
+    .btn-edit-item { color: #64b5f6; }
+    .btn-del-item { color: #e57373; }
 
     /* Meals Display */
     .meal-card-header {
@@ -374,7 +381,7 @@
   </div>
 
   <div class="app-grid">
-    <!-- Panel Izquierdo: Añadir / Crear / Borrar / Metas -->
+    <!-- Panel Izquierdo: Añadir / Crear / Borrar / Editar / Metas -->
     <div>
       <div class="card">
         <h2>Añadir alimento</h2>
@@ -428,7 +435,7 @@
         <details>
           <summary>➕ Añadir alimento nuevo</summary>
           <div>
-            <div class="form-group"><input type="text" id="new-name" placeholder="Nombre"></div>
+            <div class="form-group"><input type="text" id="new-name" placeholder="Nombre (ej: 🥩 Pechuga)"></div>
             <div class="row-inputs">
               <div class="form-group"><input type="number" id="new-kcal" placeholder="Kcal /100g"></div>
               <div class="form-group"><input type="number" id="new-p" placeholder="Proteína /100g"></div>
@@ -441,9 +448,9 @@
           </div>
         </details>
 
-        <!-- Gestor para Borrar Alimentos de la Lista -->
+        <!-- Gestor para Editar / Borrar Alimentos -->
         <details>
-          <summary>⚙️ Borrar alimentos guardados</summary>
+          <summary>⚙️ Gestionar / Editar alimentos</summary>
           <div>
             <div class="manage-list" id="manage-food-list"></div>
           </div>
@@ -459,7 +466,7 @@
       <div class="totals-grid">
         <div class="total-card">
           <div class="val" style="color: var(--accent-kcal);">
-            <span id="total-kcal">0</span> <span class="goal-text">/ <span id="display-goal-kcal">2000</span></span>
+            <span id="total-kcal">0</span> <span class="goal-text">/ <span id="display-goal-kcal">2200</span></span>
           </div>
           <div class="lbl">kcal</div>
         </div>
@@ -477,7 +484,7 @@
         </div>
         <div class="total-card">
           <div class="val" style="color: var(--accent-fats);">
-            <span id="total-g">0</span> <span class="goal-text">/ <span id="display-goal-g">60</span></span>
+            <span id="total-g">0</span> <span class="goal-text">/ <span id="display-goal-g">70</span></span>
           </div>
           <div class="lbl">grasa g</div>
         </div>
@@ -495,10 +502,10 @@
   </div>
 
   <script>
-    // Base de alimentos
+    // Base de alimentos iniciales con emojis
     let foodDatabase = JSON.parse(localStorage.getItem('foodDB')) || [
-      { name: "Pechuga de Mercadona", kcal: 100, p: 22, c: 0, g: 1.8 },
-      { name: "Atún al natural (lata)", kcal: 116, p: 26, c: 0, g: 1 }
+      { name: "🥩 Pechuga de Mercadona", kcal: 100, p: 22, c: 0, g: 1.8 },
+      { name: "🐟 Atún al natural (lata)", kcal: 116, p: 26, c: 0, g: 1 }
     ];
 
     // Estructura por días
@@ -522,7 +529,6 @@
     }
 
     function init() {
-      // Cargar metas en los inputs
       document.getElementById('goal-kcal').value = dailyGoals.kcal;
       document.getElementById('goal-p').value = dailyGoals.p;
       document.getElementById('goal-c').value = dailyGoals.c;
@@ -538,7 +544,7 @@
       dailyGoals.c = parseFloat(document.getElementById('goal-c').value) || 0;
       dailyGoals.g = parseFloat(document.getElementById('goal-g').value) || 0;
       localStorage.setItem('dailyGoals', JSON.stringify(dailyGoals));
-      renderDay(); // Actualizar la vista de totales
+      renderDay();
     }
 
     function renderFoodOptions() {
@@ -553,11 +559,25 @@
         manageList.innerHTML = foodDatabase.map((f, i) => `
           <div class="manage-item">
             <span>${f.name}</span>
-            <button class="btn-del-item" onclick="deleteFoodFromDB(${i})">🗑️ Borrar</button>
+            <div class="item-actions">
+              <button class="btn-action-item btn-edit-item" onclick="editFoodFromDB(${i})">✏️ Editar</button>
+              <button class="btn-action-item btn-del-item" onclick="deleteFoodFromDB(${i})">🗑️ Borrar</button>
+            </div>
           </div>
         `).join('');
       }
       updateCalculations();
+    }
+
+    function editFoodFromDB(index) {
+      const food = foodDatabase[index];
+      const newName = prompt("Nuevo nombre del alimento (puedes añadir un emoji):", food.name);
+      
+      if (newName !== null && newName.trim() !== "") {
+        foodDatabase[index].name = newName.trim();
+        saveState();
+        renderFoodOptions();
+      }
     }
 
     function deleteFoodFromDB(index) {
