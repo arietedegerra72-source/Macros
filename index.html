@@ -178,12 +178,23 @@
       cursor: pointer;
     }
 
-    details summary {
-      color: var(--text-muted);
-      font-size: 13px;
-      cursor: pointer;
+    details {
+      background-color: #141211;
+      padding: 10px;
+      border-radius: 6px;
       margin-top: 12px;
-      margin-bottom: 8px;
+      border: 1px solid var(--border-color);
+    }
+
+    details summary {
+      color: var(--text-main);
+      font-size: 13px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    
+    details > div {
+      margin-top: 12px;
     }
 
     .btn-secondary {
@@ -204,7 +215,7 @@
       overflow-y: auto;
       border: 1px solid var(--border-color);
       border-radius: 6px;
-      background-color: #141211;
+      background-color: #0a0908;
     }
 
     .manage-item {
@@ -303,13 +314,20 @@
     }
 
     .total-card .val {
-      font-size: 22px;
+      font-size: 20px;
       font-weight: bold;
+    }
+
+    .goal-text {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: normal;
     }
 
     .total-card .lbl {
       font-size: 11px;
       color: var(--text-muted);
+      margin-top: 4px;
     }
 
     .actions-bar {
@@ -336,7 +354,7 @@
   <header>
     <div class="title-area">
       <h1>Báscula de <span>macros</span></h1>
-      <p>Pesa el alimento, añade los gramos y monta el menú del día — almuerzo, comida, merienda y cena.</p>
+      <p>Pesa el alimento, añade los gramos y monta el menú del día.</p>
     </div>
     <div class="day-total">
       <div class="day-label" id="selected-day-title">Lunes</div>
@@ -356,7 +374,7 @@
   </div>
 
   <div class="app-grid">
-    <!-- Panel Izquierdo: Añadir / Crear / Borrar -->
+    <!-- Panel Izquierdo: Añadir / Crear / Borrar / Metas -->
     <div>
       <div class="card">
         <h2>Añadir alimento</h2>
@@ -391,25 +409,44 @@
 
         <button class="btn-add" onclick="addFoodToMeal()">Añadir a la comida</button>
 
+        <!-- Metas Diarias -->
+        <details>
+          <summary>🎯 Configurar metas diarias</summary>
+          <div>
+            <div class="row-inputs">
+              <div class="form-group"><label>Kcal objetivo</label><input type="number" id="goal-kcal" oninput="saveGoals()"></div>
+              <div class="form-group"><label>Proteína (g)</label><input type="number" id="goal-p" oninput="saveGoals()"></div>
+            </div>
+            <div class="row-inputs">
+              <div class="form-group"><label>Carbos (g)</label><input type="number" id="goal-c" oninput="saveGoals()"></div>
+              <div class="form-group"><label>Grasa (g)</label><input type="number" id="goal-g" oninput="saveGoals()"></div>
+            </div>
+          </div>
+        </details>
+
         <!-- Crear Nuevo Alimento -->
         <details>
-          <summary>▼ Añadir alimento que no está en la lista</summary>
-          <div class="form-group"><input type="text" id="new-name" placeholder="Nombre"></div>
-          <div class="row-inputs">
-            <div class="form-group"><input type="number" id="new-kcal" placeholder="Kcal /100g"></div>
-            <div class="form-group"><input type="number" id="new-p" placeholder="Proteína /100g"></div>
+          <summary>➕ Añadir alimento nuevo</summary>
+          <div>
+            <div class="form-group"><input type="text" id="new-name" placeholder="Nombre"></div>
+            <div class="row-inputs">
+              <div class="form-group"><input type="number" id="new-kcal" placeholder="Kcal /100g"></div>
+              <div class="form-group"><input type="number" id="new-p" placeholder="Proteína /100g"></div>
+            </div>
+            <div class="row-inputs">
+              <div class="form-group"><input type="number" id="new-c" placeholder="Carbos /100g"></div>
+              <div class="form-group"><input type="number" id="new-g" placeholder="Grasa /100g"></div>
+            </div>
+            <button class="btn-secondary" onclick="createNewFood()">Guardar alimento</button>
           </div>
-          <div class="row-inputs">
-            <div class="form-group"><input type="number" id="new-c" placeholder="Carbos /100g"></div>
-            <div class="form-group"><input type="number" id="new-g" placeholder="Grasa /100g"></div>
-          </div>
-          <button class="btn-secondary" onclick="createNewFood()">Guardar alimento</button>
         </details>
 
         <!-- Gestor para Borrar Alimentos de la Lista -->
         <details>
-          <summary>⚙️ Gestionar / Borrar alimentos de la lista</summary>
-          <div class="manage-list" id="manage-food-list"></div>
+          <summary>⚙️ Borrar alimentos guardados</summary>
+          <div>
+            <div class="manage-list" id="manage-food-list"></div>
+          </div>
         </details>
       </div>
     </div>
@@ -418,22 +455,30 @@
     <div>
       <div id="meals-container"></div>
 
-      <!-- Resumen de Macros -->
+      <!-- Resumen de Macros y Metas -->
       <div class="totals-grid">
         <div class="total-card">
-          <div class="val" id="total-kcal" style="color: var(--accent-kcal);">0</div>
+          <div class="val" style="color: var(--accent-kcal);">
+            <span id="total-kcal">0</span> <span class="goal-text">/ <span id="display-goal-kcal">2000</span></span>
+          </div>
           <div class="lbl">kcal</div>
         </div>
         <div class="total-card">
-          <div class="val" id="total-p" style="color: var(--accent-prot);">0</div>
+          <div class="val" style="color: var(--accent-prot);">
+            <span id="total-p">0</span> <span class="goal-text">/ <span id="display-goal-p">150</span></span>
+          </div>
           <div class="lbl">proteína g</div>
         </div>
         <div class="total-card">
-          <div class="val" id="total-c" style="color: var(--accent-carb);">0</div>
+          <div class="val" style="color: var(--accent-carb);">
+            <span id="total-c">0</span> <span class="goal-text">/ <span id="display-goal-c">200</span></span>
+          </div>
           <div class="lbl">carbos g</div>
         </div>
         <div class="total-card">
-          <div class="val" id="total-g" style="color: var(--accent-fats);">0</div>
+          <div class="val" style="color: var(--accent-fats);">
+            <span id="total-g">0</span> <span class="goal-text">/ <span id="display-goal-g">60</span></span>
+          </div>
           <div class="lbl">grasa g</div>
         </div>
       </div>
@@ -450,7 +495,7 @@
   </div>
 
   <script>
-    // Base de alimentos por defecto
+    // Base de alimentos
     let foodDatabase = JSON.parse(localStorage.getItem('foodDB')) || [
       { name: "Pechuga de Mercadona", kcal: 100, p: 22, c: 0, g: 1.8 },
       { name: "Atún al natural (lata)", kcal: 116, p: 26, c: 0, g: 1 }
@@ -467,6 +512,8 @@
       "Domingo": { Almuerzo: [], Comida: [], Merienda: [], Cena: [] }
     };
 
+    // Metas Diarias
+    let dailyGoals = JSON.parse(localStorage.getItem('dailyGoals')) || { kcal: 2200, p: 150, c: 200, g: 70 };
     let currentDay = "Lunes";
 
     function saveState() {
@@ -475,8 +522,23 @@
     }
 
     function init() {
+      // Cargar metas en los inputs
+      document.getElementById('goal-kcal').value = dailyGoals.kcal;
+      document.getElementById('goal-p').value = dailyGoals.p;
+      document.getElementById('goal-c').value = dailyGoals.c;
+      document.getElementById('goal-g').value = dailyGoals.g;
+
       renderFoodOptions();
       renderDay();
+    }
+
+    function saveGoals() {
+      dailyGoals.kcal = parseFloat(document.getElementById('goal-kcal').value) || 0;
+      dailyGoals.p = parseFloat(document.getElementById('goal-p').value) || 0;
+      dailyGoals.c = parseFloat(document.getElementById('goal-c').value) || 0;
+      dailyGoals.g = parseFloat(document.getElementById('goal-g').value) || 0;
+      localStorage.setItem('dailyGoals', JSON.stringify(dailyGoals));
+      renderDay(); // Actualizar la vista de totales
     }
 
     function renderFoodOptions() {
@@ -488,7 +550,6 @@
         manageList.innerHTML = `<div style="padding:8px; color:var(--text-muted); font-size:12px;">No hay alimentos guardados.</div>`;
       } else {
         select.innerHTML = foodDatabase.map((f, i) => `<option value="${i}">${f.name}</option>`).join('');
-        
         manageList.innerHTML = foodDatabase.map((f, i) => `
           <div class="manage-item">
             <span>${f.name}</span>
@@ -500,8 +561,7 @@
     }
 
     function deleteFoodFromDB(index) {
-      const foodName = foodDatabase[index].name;
-      if (confirm(`¿Quieres eliminar "${foodName}" de tu lista de alimentos?`)) {
+      if (confirm(`¿Quieres eliminar "${foodDatabase[index].name}" de tu lista?`)) {
         foodDatabase.splice(index, 1);
         saveState();
         renderFoodOptions();
@@ -551,7 +611,6 @@
       saveState();
       renderFoodOptions();
       
-      // Limpiar formulario
       document.getElementById('new-name').value = '';
       document.getElementById('new-kcal').value = '';
       document.getElementById('new-p').value = '';
@@ -645,17 +704,22 @@
         `;
       });
 
-      // Actualizar Totales
+      // Actualizar Totales Diarios
       document.getElementById('header-kcal').innerText = totKcal;
       document.getElementById('total-kcal').innerText = totKcal;
       document.getElementById('total-p').innerText = totP.toFixed(1);
       document.getElementById('total-c').innerText = totC.toFixed(1);
       document.getElementById('total-g').innerText = totG.toFixed(1);
+
+      // Actualizar Metas Visuales
+      document.getElementById('display-goal-kcal').innerText = dailyGoals.kcal;
+      document.getElementById('display-goal-p').innerText = dailyGoals.p;
+      document.getElementById('display-goal-c').innerText = dailyGoals.c;
+      document.getElementById('display-goal-g').innerText = dailyGoals.g;
     }
 
-    // Funciones de Importar / Exportar JSON
     function exportData() {
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ foodDatabase, daysData }));
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ foodDatabase, daysData, dailyGoals }));
       const downloadAnchor = document.createElement('a');
       downloadAnchor.setAttribute("href", dataStr);
       downloadAnchor.setAttribute("download", `menu_macros_copia.json`);
@@ -675,6 +739,7 @@
           if (imported.foodDatabase && imported.daysData) {
             foodDatabase = imported.foodDatabase;
             daysData = imported.daysData;
+            if (imported.dailyGoals) dailyGoals = imported.dailyGoals;
             saveState();
             init();
             alert("¡Menú e historial importados correctamente!");
